@@ -1,0 +1,146 @@
+{% extends "ga.html" %}
+{% block head %}
+{{ super() }}
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script>
+$(document).ready(function(){
+    $("#flip").click(function(){
+        $("#panel").slideToggle("slow");
+    });
+});
+$(document).ready(function(){
+    $("#fl").click(function(){
+        $("#panel").slideToggle("slow");
+    });
+});
+</script>
+<style>
+#panel, #flip {
+    padding: 10px;
+    text-align: center;
+    background-color: #332C2B;
+    border: solid 0.1px #c3c3c3;
+}
+#flip{
+
+    margin-top: 5em;
+}
+#panel {
+    padding: 50px;
+    display: none;
+}
+
+a{
+
+  color:white;
+}
+
+table, th, td {
+    padding: 15px;
+}
+tr:hover{
+  background-color:#696969;
+}
+.fl{
+	padding: 0px;
+  position: relative;
+	top: 0;
+	left: 0;
+  padding-bottom:10px:
+}
+.f{
+  opacity: 0.3;
+  position: absolute;
+   top: 100px;
+   left: 50px;
+}
+
+.f:hover{
+  opacity: 0.7;
+  position: absolute;
+   top: 100px;
+   left: 50px;
+
+
+}
+
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="container">
+	<div class ="gallery-grids">
+	<div class="row">
+		<div class="col-lg-4 col-md-6 col-sm-6 col-xs-12">
+	  <div id = "fl">
+			 <img src="{{ image_url[id][2:-2] }}" alt = {{ image_url[id][0] }} style ="height:80%" class="fl" />
+
+       <img src="{{ url_for('static', filename ='images/video.png')  }}" class="f" />
+       </div>
+
+	  </div>
+		<div class="col-lg-8 col-md-6 col-sm-6 col-xs-12">
+	  <h1> {{ image_title[id]  }}</h1>
+	  <br>
+	  <h4>{{description[id]}}</h4>
+		<br>
+		<h4><span>Directors: </span>{{ di[id][2:-2] }} </h4>
+		<br>
+		<h4><span>Staring:</span>{{ ca[id].strip("[]") }}</h4>
+		<br>
+		<h4><span>Genres:</span> {{ ge[id].strip("[]") }}</h4>
+	  <br>
+
+		<h4><span>Avaialble at:</span>
+			{% for i in range(l) %}
+ 		   <a href ="{{ref[com[i]] }}" target="_blank">  {{ src[com[i]] }}</a>
+ 		 {% endfor %}
+			 </h4>
+	  <br>
+	</div>
+	</div>
+</div>
+
+<div class="inforamtion">
+	<div id="flip"><h3>Purchase Information Details</h3></div>
+	<div id="panel">
+		{% for i in range(l) %}
+		<table style="width:100%">
+
+	  <tr>
+	    <th><a href ="{{ref[com[i]] }}" target="_blank"> <h2>  <img src="{{ url_for('static', filename ='images/video.png')  }}" style = "width:5%"/> {{src[com[i]]}}</h2>	</a></th>
+         {% if src[com[i]]== 'NETFLIX'  %}
+        <td align="right"><a href ="{{ref[com[i]] }}" target="_blank"><h4> {{ "Free for NETFLIX subscribers" }}</h4></td>
+         {%  endif  %}
+         {% if src[com[i]] != 'NETFLIX'  %}
+
+          <td align="right"> <a href ="{{ref[com[i]] }}" target="_blank"> <p>  {{'BUY'}}
+            {%  for i in pu[com[i]]   %}
+                {% if i['purchase_type'].upper() == 'BUY' %}
+                {{ '$'+i['price']  }}
+                {{i['quality'].upper() }}
+                {%  endif  %}
+              {% endfor %}
+            </p>
+            <p>  {{'RENT'}}
+              {%  for i in pu[com[i]]  %}
+                  {% if i['purchase_type'].upper() == 'RENT' %}
+                  {{ '$'+ i['price']  }}
+                  {{i['quality'].upper() }}
+                  {%  endif  %}
+                {% endfor %}
+              </p>
+          </td>
+          {%  endif  %}
+	  </tr>
+	</table>
+ {% endfor %}
+</div>
+
+</div>
+
+</div>
+
+
+{% endblock %}

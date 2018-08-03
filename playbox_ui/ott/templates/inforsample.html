@@ -1,0 +1,226 @@
+{% extends "ga.html" %}
+{% block head %}
+{{ super() }}
+
+<link href="{{ url_for('static', filename ='css/slick.css')}}" type="text/css" rel="stylesheet" media="all">
+<link href="{{ url_for('static', filename = 'css/slick-theme.css')}}" type="text/css" rel="stylesheet" media="all">
+
+<style type="text/css">
+
+.box{
+        color: #fff;
+        padding: 20px;
+        display: none;
+        margin-top: 20px;
+    }
+.1{ background: #ff0000; }
+.green{ background: #228B22; }
+.blue{ background: #0000ff; }
+
+
+
+* {
+  box-sizing: border-box;
+}
+.slider {
+    width: 80%;
+    margin: 10px auto;
+}
+
+.slick-slide {
+  margin: 0px 20px;
+}
+
+.slick-slide img {
+  width: 100%;
+}
+
+.slick-prev:before,
+.slick-next:before {
+  color: white;
+}
+
+
+.slick-slide {
+  transition: all ease-in-out .3s;
+  opacity: 1;
+}
+
+.slick-active {
+  opacity: 1;
+}
+
+.slick-current {
+  opacity: 1;
+}
+.im{
+
+  margin-top: 10px;
+}
+.hvri:hover{
+
+  background-color:#696969;
+
+}
+.img:hover{
+  background-color:#696969;
+}
+select{
+  background-color:#696969;
+
+}
+a{
+  color:white;
+}
+
+table, th, td {
+    padding: 15px;
+}
+tr:hover{
+  background-color:#696969;
+}
+.imgs{
+padding-top: 50px;
+}
+
+.fl{
+	padding: 0px;
+  position: relative;
+	top: 0;
+	left: 0;
+  padding-bottom:10px:
+}
+.f{
+  opacity: 0.3;
+  position: absolute;
+   top: 100px;
+   left: 50px;
+}
+
+.f:hover{
+  opacity: 0.7;
+  position: absolute;
+   top: 100px;
+   left: 50px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="container">
+	<div class ="gallery-grids">
+	<div class="row">
+		<div class="col-lg-4 col-md-6 col-sm-6 col-xs-12">
+	  <div id = "fl">
+			 <img src="{{ image_url[1][2:-2] }}" alt = {{ image_url[id][0] }} style ="width:80%"  class="fl" />
+       </div>
+	  </div>
+		<div class="col-lg-8 col-md-6 col-sm-6 col-xs-12">
+	  <h1> {{ image_title[id]  }}</h1>
+	  <br>
+	  <h4>{{description[id]}}</h4>
+		<br>
+		<h4><span>Directors: </span>{{ di[id][2:-2] }} </h4>
+		<br>
+		<h4><span>Staring:</span>{{ ca[id].strip("[]") }}</h4>
+		<br>
+		<h4><span>Genres:</span> {{ ge[id].strip("[]") }}</h4>
+	  <br>
+
+		<h4><span>Avaialble at:</span>
+			{% for i in range(l) %}
+ 		   <a href ="{{ref[com[i]] }}" target="_blank">  {{ src[com[i]] }}</a>
+ 		 {% endfor %}
+			 </h4>
+	  <br>
+	</div>
+	</div>
+</div>
+</div>
+<br>
+<br>
+<br>
+<br>
+<br>
+<h2>&nbsp &nbsp All Full Episodes: {{ lp }}
+  <select>
+          <option><h2>ALL Seasons</h2></option>
+          <option value="{{en[0]}}"><h2>Season {{en[0]}}</h2></option>
+          <option value="green">Green</option>
+          <option value="blue">Blue</option>
+      </select>
+ </h2>
+
+<!---->
+   <div class="{{en[0]}} box">
+     <section class="regular slider">
+       {% for i in range(lp) %}
+       <div class ="hvri">
+       <a href ="{{ eurl[i] }}" target="_blank">  <img src="{{ xesp[i][2:-2] }}" alt = {{ xesp[i][2:-2] }} />
+         <div class="im">
+            <h3>{{ et[i]}}</h3>
+            <h4>Episode number :{{ en[i]}}</h4>
+            <h4>season number :{{ sn[i]}}</h4>
+            <h4>Date :{{ dt[i]}}</h4>
+        </div>
+      </a>
+    </div>
+   {% endfor %}
+ </section>
+   </div>
+   <div class="green box">You have selected <strong>green option</strong> so i am here</div>
+   <div class="blue box">You have selected <strong>blue option</strong> so i am here</div>
+
+  <script src="{{ url_for('static', filename ='js/slick.min.js') }}"></script>
+  <script type="text/javascript">
+    $(document).on('ready', function() {
+      $("select").change(function(){
+        $(this).find("option:selected").each(function(){
+                    var optionValue = $(this).attr("value");
+                    if(optionValue){
+                        $(".box").not("." + optionValue).hide();
+                        $("." + optionValue).show();
+                    } else{
+                        $(".box").hide();
+                        $("."+"1").show();
+                    }
+                });
+            }).change();
+
+      $(".regular").slick({
+  dots: true,
+  infinite: false,
+  speed: 300,
+  slidesToShow: 5,
+  slidesToScroll: 5,
+  responsive: [
+    {
+      breakpoint: 1024,
+      settings: {
+        slidesToShow: 3,
+        slidesToScroll: 3,
+        infinite: true,
+        dots: true
+      }
+    },
+    {
+      breakpoint: 600,
+      settings: {
+        slidesToShow: 2,
+        slidesToScroll: 2
+      }
+    },
+    {
+      breakpoint: 480,
+      settings: {
+        slidesToShow: 1,
+        slidesToScroll: 1
+      }
+    }
+  ]
+  });
+    });
+  </script>
+
+{% endblock %}
