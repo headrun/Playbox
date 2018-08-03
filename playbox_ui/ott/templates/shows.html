@@ -1,0 +1,23 @@
+{% extends "ga.html" %}
+{% block content %}
+
+<div class ="container-fluid">
+ <div class="gallery-grids">
+	{% for i in range (len) %}
+	   <div class="col-md-2 gallery-grid">
+			<div class="grid">
+				<figure class="effect-apollo">
+					<a href="/{{i}}/">
+						<img src="{{ image_url[i][2:-2]}}" alt = {{ image_url[i]  }}  style = "height:300px" />
+						<figcaption>
+							<p><strong>open to get more details about the Movie></strong></p>
+						</figcaption>
+					</a>
+				</figure>
+			</div>
+		</div>
+		{% endfor %}
+
+	</div>
+</div>
+{% endblock %}
