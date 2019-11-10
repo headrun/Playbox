@@ -17,11 +17,7 @@ def hover_on_element(browser, element):
     except:
         return False
 
-import pdb;pdb.set_trace()
-#browser = webdriver.Firefox(executable_path='/home/amuktha/upwork/RestFramework/rest/spiders/geckodriver')
-capabilities = webdriver.DesiredCapabilities().FIREFOX
-capabilities["marionette"] = True
-browser = webdriver.Firefox(executable_path="/usr/local/bin/geckodriver.exe")
+browser = webdriver.Firefox(executable_path='/home/amuktha/headrun/geckodriver')
 browser.get("https://platform.application.prd.supplyon.com/logon/logonServlet") 
 time.sleep(5)
 username = browser.find_element_by_id("j_username")
