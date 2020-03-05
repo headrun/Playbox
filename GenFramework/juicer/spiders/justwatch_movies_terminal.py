@@ -8,7 +8,7 @@ sys.path.insert(0, r'/root/hplaybox/Genframework/')
 import re
 from juicer.pipelines import JuicerPipeline
 from juicer.items import *
-from juicer.temp_utils import *
+from juicer.utils import *;
 # sys.path.insert(0,r'/home/veveo/headrun/Sneha/justwatch_path/SnehaGenframework/')
 #sys.path.insert(0, r'/data/veveo/justwatch_prod/Genframework/')
 #sys.path.insert(0, r'/root/hplaybox/Genframework/')
@@ -29,7 +29,7 @@ class JustwatchMovieTerminal(JuicerSpider):
         self.final_itemslist = []
         self.providers_id = []
         self.quality_dict = {}
-
+        
     def create_cursor(self):
         conn = MySQLdb.connect(host='localhost', user='root', passwd='e3e2b51caee03ee85232537ccaff059d167518e2',
                                db='JUSTWATCHRAWDB', charset='utf8', use_unicode=True)
@@ -43,7 +43,6 @@ class JustwatchMovieTerminal(JuicerSpider):
         sks_with_data = cur.fetchall()
         for sk in sks_with_data:
             justwatch_sk, json_response = sk
-            print(justwatch_sk)
             movie_item = self.get_moviesinfo(justwatch_sk, json_response)
 
     def yielding_items(self, final_itemslist):
@@ -60,11 +59,13 @@ class JustwatchMovieTerminal(JuicerSpider):
             movie_sk = json_data.get('id', '')
             title = json_data.get('title', '')
             ref_url = json_data.get('full_path', '')
+            print (movie_sk)
 
             try:
                 if ref_url and 'http' not in ref_url:
                     ref_url = 'https://www.justwatch.com' + ref_url
             except:
+                print("\n\n\n GetMoviesInfo\n\n\n")
                 print(movie_sk)
                 '''else:
                 ref_url = response.url'''
@@ -221,10 +222,11 @@ class JustwatchMovieTerminal(JuicerSpider):
                                 'standard_web', '')
                             quality_value = self.get_program_sk(
                                 quality_key, prov)
-
                             if quality and quality_value:
                                 qua_list.append(quality)
                                 quality_dict.update({quality_value: qua_list})
+                
+                
                 availability_list = []
                 provider_avail_dict = {}
                 if ava_info:
@@ -232,64 +234,57 @@ class JustwatchMovieTerminal(JuicerSpider):
                         program_sk = ''
                         provider_id = ava.get('provider_id', '')
                         if provider_id:
-                            # if provider_id == 8 or provider_id == 9:
-                            if provider_id == 9 or provider_id == 8 or provider_id == 31:
                                 url = ava.get('urls', {}).get(
                                     'standard_web', '')
                                 program_sk = self.get_program_sk(
                                     url, provider_id)
-                                provider_avail_dict.update({program_sk: ava})
-                                if provider_id == 9:
-                                    url = url.split('?')[0]
-                                if provider_id == 31:
-                                    url = ava.get('urls', {}).get(
-                                        'standard_web', '')
+                                
+                                self.availitem_yielding_providers(quality_dict, ava, program_sk, movie_sk, title, duration)
+                              # provider_avail_dict.update({program_sk: ava})
 
-                    if provider_avail_dict:
-                        for avail in provider_avail_dict.keys():
-                            provider = ''
-                            provider_value = provider_avail_dict.get(avail, {})
-                            provider = provider_value.get('provider_id', '')
-                            if provider:
-                                # if provider == 8 or provider == 9:
-                                if provider == 9:
-                                    self.availitem_yielding_providers(
-                                        quality_dict, provider_value, avail, movie_sk, title, duration)
-                                if provider == 8:
-                                    self.availitem_yielding_providers(
-                                        quality_dict, provider_value, avail, movie_sk, title, duration)
-                                if provider == 31:
-                                    self.availitem_yielding_providers(
-                                        quality_dict, provider_value, avail, movie_sk, title, duration)
+                  #  if provider_avail_dict:
+                   #     import pdb;pdb.set_trace()
+                    #    for avail in provider_avail_dict.keys():
+                     #       provider = ''
+                      #      provider_value = provider_avail_dict.get(avail, {})
+                       #     provider = provider_value.get('provider_id', '')
+                        #    import pdb; pdb.set_trace()
+
+                         #   if provider:
+                          #          self.availitem_yielding_providers(
+                           #             quality_dict, provider_value, avail, movie_sk, title, duration)
+
 
     def availitem_yielding_providers(self, quality_dict, provider_value, avail, movie_sk, title, duration):
         avail_items = []
         avail_item = AvailItem()
         json_list, list_items = [], []
         quality_list = quality_dict.get(avail, [])
-        monetization_type, providerid, last_change_rt_price, retail_price, platform_types, audio_language, subtitle_language, currency, url = [
-            '']*9
-        if not quality_list:
-            quality_list = ['sd']
-        for quality in quality_list:
-            monetization_type, providerid, last_change_rt_price, retail_price, platform_types, audio_language, subtitle_language, currency, url = self.get_availinfo(
-                provider_value)
-            for platform in platform_types:
-                template_values, template_id = self.get_templates(
-                    providerid, platform, avail)
-                with_constraint, medium_type, price_type, constraints,  = self.get_othervalues(
-                    providerid, retail_price)
+        monetization_type, providerid, last_change_rt_price, retail_price, platform_types, audio_language, subtitle_language, currency, url,quality =['']*10
+        #if not quality_list:
+         #   quality_list = ['sd']
+        #for quality in quality_list:
+            #import pdb;pdb.set_trace()
+        monetization_type, providerid, last_change_rt_price, retail_price, platform_types, audio_language, subtitle_language, currency, url,quality = self.get_availinfo(provider_value)
+        for platform in platform_types:
+                template_values = self.get_templates(providerid, platform, avail)
+                with_constraint = False
+                template_id =''
+                medium_type, price_type = self.get_othervalues(providerid, retail_price)
                 if not retail_price:
                     currency = ''
                 scraper_args = {'type': 'movie',
                                 'sk': avail, 'justwatch_id': movie_sk}
-                avail_dict = {'justwatch_id': movie_sk, 'title': normalize(title), 'platform_id': platform, 'country_code': 'us', 'reference_url': url, 'template_id': template_id, 'template_values': template_values, 'duration': duration, 'last_refreshed_timestamp': str(get_ts_with_seconds().replace(
-                    ' ', 'T')), 'program_type': 'movie', 'medium_type': medium_type, 'price': str(retail_price), 'subtitle_languages': subtitle_language, 'audio_languages': audio_language, 'price_type': price_type, 'price_currency': currency, 'quality': quality, 'scraper_args': scraper_args, 'with_constraint': with_constraint, 'constraints': constraints}
+                avail_dict = {'justwatch_id': movie_sk, 'title': normalize(title), 'platform_id': platform, 'country_code': 'us', 'reference_url': url, 'template_id': template_id, 'template_values': template_values, 'duration': duration, 'last_refreshed_timestamp': str(get_ts_with_seconds().replace(' ', 'T')), 'program_type': 'movie', 'medium_type': medium_type, 'price': str(retail_price), 'subtitle_languages': subtitle_language, 'audio_languages': audio_language, 'price_type': price_type, 'price_currency': currency, 'quality': quality, 'scraper_args': scraper_args,'with_constraint': False , 'purchase_type' : monetization_type}
                 json_list.append(avail_dict)
-        avail_item.update({'source_id': str(providerid), 'program_sk': normalize(
-            avail), 'source_availabilities': json_list})
+        avail_item.update({'source_id': str(providerid), 'program_sk': normalize(avail), 'source_availabilities': json_list})
         self.pipeline.process_item(avail_item, self.spider)
 
+
+
+
+
+  
     def get_crewinfo(self, movie_sk, res, role, role_title, rank):
         i = json.loads(res)
         crew_id = i.get('id', '')
@@ -323,55 +318,33 @@ class JustwatchMovieTerminal(JuicerSpider):
             self.pipeline.process_item(program_item, self.spider)
 
     def get_othervalues(self, provider_id, price):
-        if provider_id == 8:
+       
+        if provider_id:
             medium_type = 'streaming'
-            constraints = ["service_subscription"]
-            with_constraint = True
             if not price:
                 price_type = 'free'
-        if provider_id == 9:
-            medium_type = 'streaming'
-            constraints = ["service_subscription"]
-            with_constraint = True
-            if not price:
-                price_type = 'free'
-        if provider_id == 31:
-            medium_type = 'streaming'
-            constraints = ["cable_subscription"]
-            with_constraint = True
-            if not price:
-                price_type = 'free'
-        return with_constraint, medium_type, price_type, constraints
+            else:
+                price_type = 'known'
+
+        return  medium_type, price_type
 
     def get_templates(self, provider_id, platform, program_sk):
-        if provider_id == 8:
+        
+        if provider_id:
             if platform:
-                template_id = 'netflixusa_movie_%s_jw' % platform
-                template_values = {'sk': str(program_sk)}
-        if provider_id == 9:
+                #template_id =
+                template_values = {}
 
-            if platform:
+        return template_values
 
-                template_id = 'amazonprime_movie_%s_jw' % platform
-                template_values = {'char_sk': str(program_sk)}
-        if provider_id == 31:
-            if platform:
-                template_id = 'hbogo_movie_%s_jw' % platform
-                template_values = {'sk': str(program_sk)}
-
-        return template_values, template_id
 
     def get_program_sk(self, url, provider_id):
         program_sk = ''
-        if provider_id == 8:
-            program_sk = re.findall(r'\d+', url)[0]
-        if provider_id == 9:
-            try:
+        
+        try:
                 program_sk = url.split('?')[0].split('/')[-1]
-            except:
-                print("error in program sk construction for providerid 9")
-        if provider_id == 31:
-            program_sk = url.split(':')[-1]
+        except:
+             print("error in program sk construction for providerid 9")
 
         return program_sk
 
@@ -381,6 +354,7 @@ class JustwatchMovieTerminal(JuicerSpider):
         retail_price = ava.get('retail_price', '')
         subtitle_languages = ava.get('subtitle_languages', [])
         audio_languages = ava.get('audio_languages', [])
+        
         if audio_languages:
             audio_language = ['<>'.join(audio_languages)]
         if subtitle_languages:
@@ -404,9 +378,9 @@ class JustwatchMovieTerminal(JuicerSpider):
             if i == "deeplink_ios":
                 platform_types.append('ios')
         url = ava.get('urls', {}).get('standard_web', '')
-        if provider_id == 9:
+        if provider_id == 9 or provider_id== 10:
             url = url.split('?')[0]
-        return monetization_type, provider_id, last_change_rt_price, retail_price, platform_types, audio_language, subtitle_language, currency, url
+        return monetization_type, provider_id, last_change_rt_price, retail_price, platform_types, audio_language, subtitle_language, currency, url,quality
 
     def release(self, year, prog_sk,release_date):
         release_item = ReleasesItem()

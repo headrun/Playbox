@@ -2,15 +2,20 @@
 
 import os
 import re
-import md5
+#import md5
+import hashlib
 import sys
 import optparse
 import traceback
 from glob import glob
 import logging, logging.handlers
-from ConfigParser import SafeConfigParser
+#from ConfigParser import SafeConfigParser
+import configparser
 
-_cfg = SafeConfigParser()
+#_cfg = SafeConfigParser()
+#_cfg = configparser()
+#_cfg.read('db_names.cfg')
+_cfg = configparser.ConfigParser()
 _cfg.read('db_names.cfg')
 
 PAR_DIR = os.path.abspath(os.pardir)
@@ -46,22 +51,53 @@ def get_source_and_content_type(query_file):
     query_file = os.path.basename(query_file)
     source = query_file.split('_', 1)[0]
     content_type = query_file.split('_')[-2]
-
     db_name = _cfg.get(source, 'db')
+    #db_name = 'JUSTWATCHDB'
+    #db_name = 'JUSTWATCHDEVDB'
     table = _cfg.get('meta_tables', content_type)
     log.info("Query File: %s - Source: %s - Content Type: %s - Table Name: %s", query_file, source, content_type, table)
 
     return db_name, table
 
+def load_meta_created_files(queries_file, _setup):
+    _host = ['', '-h%s ' % _cfg.get('ips', 'prod')][_setup == "prod"]
+    query_files = [queries_file] if queries_file else glob("%s/*.created" % (PROCESSING_QUERY_FILES_PATH))
+    for query_file in query_files[:100]:
+        db_name, table = get_source_and_content_type(query_file)
+        #db_name = _cfg.get(source, 'db')
+        # db_name = 'JUSTWATCHOTTDB_DEV'
+        #cursor, db = get_mysql_connection(log, _host, db_name, '', user="veveo", passwd="veveo123")
+        #cmd = 'mysql -uveveo -pveveo123 ' + _host + ' -A ' + db_name + ' --local-infile=1 -e "%s"'
+        cmd = 'mysql  -uroot -pe3e2b51caee03ee85232537ccaff059d167518e2 '+ db_name + ' --local-infile=1 -e "%s"'
+        query =  "LOAD DATA LOCAL INFILE '%s' IGNORE INTO TABLE %s CHARACTER SET utf8 FIELDS TERMINATED BY '#<>#'" % (query_file, 'created_info')
+        query += "SET created_at=NOW();"
+        try:
+            log.info("Loading Started for: %s - Load Query: %s", query_file, cmd % query)
+            os.system(cmd % query)
+            #cursor.execute(query)
+            log.info("Loading Completed For: %s", query_file)
+        except:
+            log.error("Error Occured while loading %s data into %s table", query_file, 'created_info')
+            log.error("Error: %s", traceback.format_exc())
+            move_file(query_file, dest=UNPROCESSED_QUERY_FILES_PATH)
+            continue
+
+        #db.close()
+        #cursor.close()
+        move_file(query_file)
+
+
 def load_meta_data_files(queries_file, _setup):
     _host = ['', '-h%s ' % _cfg.get('ips', 'prod')][_setup == "prod"]
-
     query_files = [queries_file] if queries_file else glob("%s/*.queries" % (PROCESSING_QUERY_FILES_PATH))
     for query_file in query_files:
         db_name, table = get_source_and_content_type(query_file)
-        cmd = 'mysql -uroot ' + _host + '-A ' + db_name + ' --local-infile=1 -e "%s"'
+        db_name = 'JUSTWATCHOTTDB' 
+        #cmd = 'mysql  -uveveo -pveveo123 ' + _host + '-A ' + db_name + ' --local-infile=1 -e "%s"'
+        cmd = 'mysql  -uroot -pe3e2b51caee03ee85232537ccaff059d167518e2 '+ db_name + ' --local-infile=1 -e "%s"'
+        #cmd = 'mysql -uroot ' + _host + '-A ' + db_name + ' --local-infile=1 -e "%s"'
         query =  "LOAD DATA LOCAL INFILE '%s' REPLACE INTO TABLE %s CHARACTER SET utf8 FIELDS TERMINATED BY '#<>#'" % (query_file, table)
-        query += "SET created_at=NOW(), modified_at=NOW();"
+        query += "SET created_at=NOW(), modified_at=NOW(), last_seen=NOW();"
         try:
             log.info("Loading Started for: %s - Load Query: %s", query_file, cmd % query)
             os.system(cmd % query)
@@ -77,14 +113,16 @@ def load_meta_data_files(queries_file, _setup):
 def load_ott_avail_files_data(_setup):
     ott_avail_files = glob("%s/*.txt" % (PROCESSING_QUERY_FILES_PATH))[:10]
     _host = ['', '-h%s ' % _cfg.get('ips', 'prod')][_setup == "prod"]
-
     for ott_avail_file in ott_avail_files:
         _avail_file = os.path.basename(ott_avail_file).rsplit('_', 1)[0]
         _source = _avail_file.rsplit('_ott_avail', 1)[0]
-        db_name = _cfg.get(_source, 'db')
-        table_name = _cfg.get(_source, 'avail_table')
-
-        cmd = 'mysql -uroot ' + _host + '-A ' + db_name + ' --local-infile=1 -e "%s"'
+        #db_name = _cfg.get(_source, 'db')
+        #db_name = 'JUSTWATCHDB'
+        db_name = 'JUSTWATCHOTTDB'
+        table_name = 'Availability'
+        #cmd = 'mysql -uveveo -pveveo123 ' + _host + '-A ' + db_name + ' --local-infile=1 -e "%s"'
+        cmd = 'mysql  -uroot -pe3e2b51caee03ee85232537ccaff059d167518e2 '+ db_name + ' --local-infile=1 -e "%s"'
+        #cmd = 'mysql -uroot ' + _host + '-A ' + db_name + ' --local-infile=1 -e "%s"'
         query = "LOAD DATA LOCAL INFILE '%s' REPLACE INTO TABLE %s CHARACTER SET utf8 FIELDS TERMINATED BY '#<>#'"% (ott_avail_file, table_name)
         try:
             log.info("Loading Started for: %s - Load Query: %s", ott_avail_file, cmd % query)
@@ -105,6 +143,7 @@ def remove_empty_files_in_unprocessed_dir():
 
 def main(options):
     load_meta_data_files(options.queries_file, options.setup)
+    load_meta_created_files(options.queries_file, options.setup)
     load_ott_avail_files_data(options.setup)
     remove_empty_files_in_unprocessed_dir()
 

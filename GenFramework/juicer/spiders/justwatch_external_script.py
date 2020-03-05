@@ -8,7 +8,7 @@ sys.path.insert(0, r'/root/hplaybox/Genframework/')
 import re
 from juicer.pipelines import JuicerPipeline
 from juicer.items import *
-from juicer.temp_utils import *
+from juicer.utils import *
 # sys.path.insert(0,r'/home/veveo/headrun/Sneha/justwatch_path/SnehaGenframework/')
 #sys.path.insert(0, r'/data/veveo/justwatch_prod/Genframework/')
 #sys.path.insert(0, r'/root/hplaybox/Genframework/')
